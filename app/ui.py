@@ -11,13 +11,20 @@ import streamlit as st
 from src import config
 from src.predict import ChurnModel, ModelNotFoundError, load_model
 
-# Colours (reference data-viz palette). Status colours are only used for risk bands,
-# and always next to an icon + label.
-BLUE = "#2a78d6"
-RED = "#e34948"
-INK_2 = "#52514e"
-MUTED = "#898781"
+# Colours: dark-mode steps of the reference data-viz palette, validated against the app
+# background #121316 (validate_palette.js: all checks pass). Status colours are only used
+# for risk bands, and always next to an icon + label.
+BLUE = "#3987e5"
+RED = "#e66767"
+SERIES = ["#3987e5", "#d95926", "#199e70", "#c98500"]  # categorical, fixed order
+INK = "#f2f2f0"
+INK_2 = "#c3c2b7"
+MUTED = "#9a9890"
+GRID = "#2a2d33"
+BASELINE = "#4a4d55"
+SURFACE = "#121316"
 STATUS = {"LOW": "#0ca30c", "MEDIUM": "#fab219", "HIGH": "#d03b3b"}
+FONT = 14  # chart label size
 
 BANDS = {
     "LOW": {
@@ -125,11 +132,12 @@ CSS = """
 [data-testid="stAppDeployButton"] {display: none;}
 [data-testid="stMainBlockContainer"] {padding-top: 4.5rem; max-width: 1200px;}
 .hero {
-  background: linear-gradient(120deg, #104281 0%, #2a78d6 100%);
+  background: linear-gradient(120deg, #0b2547 0%, #1c5cab 100%);
+  border: 1px solid #2e3a52;
   border-radius: 14px; padding: 28px 32px; margin-bottom: 8px; color: #ffffff;
 }
-.hero h1 {color: #ffffff; font-size: 2.1rem; margin: 0 0 6px 0; padding: 0;}
-.hero p {color: #dbe8fb; font-size: 1.05rem; margin: 0; max-width: 820px;}
+.hero h1 {color: #ffffff; font-size: 2.4rem; margin: 0 0 6px 0; padding: 0;}
+.hero p {color: #dbe8fb; font-size: 1.15rem; margin: 0; max-width: 820px;}
 .hero .chips {margin-top: 14px;}
 .hero .chip {
   display: inline-block; background: rgba(255,255,255,0.14); color: #ffffff;
@@ -137,7 +145,7 @@ CSS = """
   padding: 3px 12px; margin: 0 6px 6px 0; font-size: 0.85rem;
 }
 .page-title h2 {margin-bottom: 0;}
-.subtle {color: #52514e;}
+.subtle {color: #c3c2b7; font-size: 1.05rem;}
 .big-number {font-size: 3.2rem; font-weight: 700; line-height: 1.05; margin: 4px 0 2px 0;}
 </style>
 """
@@ -169,6 +177,15 @@ def footer(model: ChurnModel) -> None:
 
 # ------------------------------------------------------------------ charts
 
+def styled(chart):
+    """Shared chart styling: larger labels, no frame, transparent background."""
+    return (chart.configure_axis(labelFontSize=FONT, titleFontSize=FONT, titleFontWeight="normal",
+                                 domainColor=BASELINE, tickColor=BASELINE)
+            .configure_legend(labelFontSize=FONT, titleFontSize=FONT, symbolSize=120)
+            .configure_view(stroke=None)
+            .properties(background="transparent"))
+
+
 def risk_meter(p: float, threshold: float, high_from: float) -> alt.LayerChart:
     """Track split into the three bands with a marker at the customer's probability."""
     zones = pd.DataFrame([
@@ -191,10 +208,9 @@ def risk_meter(p: float, threshold: float, high_from: float) -> alt.LayerChart:
     )
     point = pd.DataFrame({"p": [p], "label": [pct(p)]})
     marker = alt.Chart(point).mark_point(shape="triangle-down", size=260, filled=True,
-                                         color="#0b0b0b", yOffset=-16).encode(x="p:Q")
-    text = alt.Chart(point).mark_text(dy=-34, fontSize=13, fontWeight="bold",
-                                      color="#0b0b0b").encode(x="p:Q", text="label:N")
-    return (track + marker + text).properties(height=86)
+                                         color=INK, yOffset=-16).encode(
+        x="p:Q", tooltip=[alt.Tooltip("label:N", title="This customer")])
+    return styled((track + marker).properties(height=70))
 
 
 def rate_bars(df: pd.DataFrame, overall: float, sort: bool = True) -> alt.LayerChart:
@@ -202,21 +218,21 @@ def rate_bars(df: pd.DataFrame, overall: float, sort: bool = True) -> alt.LayerC
     order = list(df.sort_values("churn_rate", ascending=False)["group"]) if sort else list(df["group"])
     y = alt.Y("group:N", sort=order, title=None, axis=alt.Axis(labelLimit=220, labelColor=INK_2))
     x = alt.X("churn_rate:Q", title=None, scale=alt.Scale(domain=[0, max(0.6, df.churn_rate.max() + 0.08)]),
-              axis=alt.Axis(format=".0%", grid=True, gridColor="#eeeeec", domain=False,
+              axis=alt.Axis(format=".0%", grid=True, gridColor=GRID, domain=False,
                             labelColor=MUTED, tickCount=4))
     base = alt.Chart(df).encode(y=y, x=x)
     bars = base.mark_bar(color=BLUE, cornerRadiusEnd=4, size=22).encode(
         tooltip=[alt.Tooltip("group:N", title="Group"),
                  alt.Tooltip("churn_rate:Q", format=".1%", title="Churn rate"),
                  alt.Tooltip("customers:Q", format=",", title="Customers")])
-    labels = base.mark_text(align="left", dx=6, color=INK_2, fontSize=12).encode(
+    labels = base.mark_text(align="left", dx=6, color=INK_2, fontSize=FONT).encode(
         text=alt.Text("churn_rate:Q", format=".1%"))
     rule_df = pd.DataFrame({"x": [overall], "label": [f"average {pct(overall)}"]})
     rule = alt.Chart(rule_df).mark_rule(color=MUTED, strokeDash=[4, 3]).encode(x="x:Q")
-    rule_label = alt.Chart(rule_df).mark_text(align="left", dx=4, dy=-6, color=MUTED, fontSize=11,
+    rule_label = alt.Chart(rule_df).mark_text(align="left", dx=4, dy=-6, color=MUTED, fontSize=FONT - 1,
                                               baseline="bottom").encode(
         x="x:Q", y=alt.value(0), text="label:N")
-    return (bars + labels + rule + rule_label).properties(height=alt.Step(34))
+    return styled((bars + labels + rule + rule_label).properties(height=alt.Step(38)))
 
 
 def signed_bars(values: pd.Series, title: str, value_format: str = ".2f") -> alt.LayerChart:
@@ -227,18 +243,18 @@ def signed_bars(values: pd.Series, title: str, value_format: str = ".2f") -> alt
               axis=alt.Axis(labelLimit=260, labelColor=INK_2))
     bars = alt.Chart(df).mark_bar(cornerRadiusEnd=4, size=20).encode(
         y=y,
-        x=alt.X("value:Q", title=title, axis=alt.Axis(grid=True, gridColor="#eeeeec", tickCount=6,
+        x=alt.X("value:Q", title=title, axis=alt.Axis(grid=True, gridColor=GRID, tickCount=6,
                                                        labelColor=MUTED, titleColor=MUTED)),
         color=alt.Color("direction:N",
                         scale=alt.Scale(domain=["raises churn risk", "lowers churn risk"],
                                         range=[RED, BLUE]),
-                        legend=alt.Legend(orient="top", title=None, labelColor=INK_2)),
+                        legend=alt.Legend(orient="top", title=None, labelColor=INK_2, labelLimit=0)),
         tooltip=[alt.Tooltip("feature:N", title="Input"),
                  alt.Tooltip("value:Q", format=value_format, title="Effect"),
                  alt.Tooltip("direction:N", title="Direction")],
     )
-    zero = alt.Chart(pd.DataFrame({"x": [0]})).mark_rule(color="#c3c2b7").encode(x="x:Q")
-    return (bars + zero).properties(height=alt.Step(30))
+    zero = alt.Chart(pd.DataFrame({"x": [0]})).mark_rule(color=BASELINE).encode(x="x:Q")
+    return styled((bars + zero).properties(height=alt.Step(34)))
 
 
 def importance_bars(df: pd.DataFrame) -> alt.Chart:
@@ -246,16 +262,16 @@ def importance_bars(df: pd.DataFrame) -> alt.Chart:
     y = alt.Y("feature:N", sort=list(df["feature"]), title=None,
               axis=alt.Axis(labelLimit=220, labelColor=INK_2))
     x = alt.X("mean:Q", title="Drop in ROC-AUC when this input is shuffled",
-              axis=alt.Axis(grid=True, gridColor="#eeeeec", labelColor=MUTED, titleColor=MUTED,
+              axis=alt.Axis(grid=True, gridColor=GRID, labelColor=MUTED, titleColor=MUTED,
                             tickCount=5))
     base = alt.Chart(df).encode(y=y, x=x)
     bars = base.mark_bar(color=BLUE, cornerRadiusEnd=4, size=20).encode(
         tooltip=[alt.Tooltip("feature:N", title="Input"),
                  alt.Tooltip("mean:Q", format=".4f", title="Mean drop in AUC"),
                  alt.Tooltip("std:Q", format=".4f", title="Std over 10 shuffles")])
-    labels = base.mark_text(align="left", dx=6, color=INK_2, fontSize=12).encode(
+    labels = base.mark_text(align="left", dx=6, color=INK_2, fontSize=FONT).encode(
         text=alt.Text("mean:Q", format=".3f"))
-    return (bars + labels).properties(height=alt.Step(30))
+    return styled((bars + labels).properties(height=alt.Step(34)))
 
 
 # ------------------------------------------------------------------ batch scoring
@@ -275,3 +291,99 @@ def score_table(model: ChurnModel, df: pd.DataFrame) -> pd.DataFrame:
 def template_csv() -> str:
     """Header-only CSV with the expected columns."""
     return ",".join([config.ID_COL] + config.FEATURE_COLS) + "\n"
+
+
+# ------------------------------------------------------------------ model charts
+
+def _axis(fmt: str) -> alt.Axis:
+    return alt.Axis(grid=True, gridColor=GRID, labelColor=MUTED, titleColor=MUTED, format=fmt,
+                    tickCount=5)
+
+
+def roc_chart(roc: dict, aucs: dict) -> alt.LayerChart:
+    rows = []
+    for name, pts in roc.items():
+        label = f"{name} (AUC {aucs[name]:.3f})"
+        rows += [{"model": label, "fpr": f, "tpr": t} for f, t in zip(pts["fpr"], pts["tpr"])]
+    df = pd.DataFrame(rows)
+    order = list(dict.fromkeys(df["model"]))
+    lines = alt.Chart(df).mark_line(strokeWidth=2).encode(
+        x=alt.X("fpr:Q", title="False positive rate", axis=_axis(".0%")),
+        y=alt.Y("tpr:Q", title="True positive rate (recall)", axis=_axis(".0%")),
+        color=alt.Color("model:N", scale=alt.Scale(domain=order, range=SERIES[:len(order)]),
+                        legend=alt.Legend(orient="bottom", direction="vertical", title=None,
+                                          labelColor=INK_2, labelLimit=0)),
+        tooltip=[alt.Tooltip("model:N", title="Model"),
+                 alt.Tooltip("fpr:Q", format=".1%", title="False positive rate"),
+                 alt.Tooltip("tpr:Q", format=".1%", title="Recall")],
+    )
+    diag = alt.Chart(pd.DataFrame({"a": [0, 1]})).mark_line(color=MUTED, strokeDash=[4, 4]).encode(
+        x="a:Q", y="a:Q")
+    return styled((diag + lines).properties(height=380))
+
+
+def threshold_chart(curve: dict, chosen: float) -> alt.LayerChart:
+    df = (pd.DataFrame(curve).rename(columns={"f1": "F1", "f2": "F2"})
+          .melt("threshold", var_name="metric", value_name="score"))
+    order = ["precision", "recall", "F1", "F2"]
+    hover = alt.selection_point(nearest=True, on="pointerover", fields=["threshold"], empty=False)
+    base = alt.Chart(df).encode(
+        x=alt.X("threshold:Q", title="Decision threshold", axis=_axis(".1f")),
+        y=alt.Y("score:Q", title="Score", scale=alt.Scale(domain=[0, 1]), axis=_axis(".1f")),
+        color=alt.Color("metric:N", scale=alt.Scale(domain=order, range=SERIES),
+                        legend=alt.Legend(orient="top", title=None, labelColor=INK_2)),
+    )
+    lines = base.mark_line(strokeWidth=2)
+    points = base.mark_point(size=70, filled=True).encode(
+        opacity=alt.condition(hover, alt.value(1), alt.value(0)),
+        tooltip=[alt.Tooltip("threshold:Q", format=".2f", title="Threshold"),
+                 alt.Tooltip("metric:N", title="Metric"),
+                 alt.Tooltip("score:Q", format=".3f", title="Score")],
+    ).add_params(hover)
+    rule_df = pd.DataFrame({"t": [chosen], "label": [f"chosen {chosen:.2f}"]})
+    rule = alt.Chart(rule_df).mark_rule(color=INK, strokeDash=[5, 4]).encode(x="t:Q")
+    label = alt.Chart(rule_df).mark_text(align="left", dx=6, dy=10, color=INK,
+                                         fontSize=FONT).encode(x="t:Q", y=alt.value(0), text="label:N")
+    return styled((lines + points + rule + label).properties(height=380))
+
+
+def confusion_chart(cm: dict) -> alt.LayerChart:
+    cells = [("Actually stayed", "Predicted stay", cm["tn"], "correctly not flagged"),
+             ("Actually stayed", "Predicted churn", cm["fp"], "false alarm"),
+             ("Actually churned", "Predicted stay", cm["fn"], "missed churner"),
+             ("Actually churned", "Predicted churn", cm["tp"], "churner caught")]
+    df = pd.DataFrame(cells, columns=["actual", "predicted", "count", "meaning"])
+    enc = dict(
+        x=alt.X("predicted:N", title=None, sort=["Predicted stay", "Predicted churn"],
+                axis=alt.Axis(labelColor=INK_2, orient="top", labelAngle=0, domain=False,
+                              ticks=False)),
+        y=alt.Y("actual:N", title=None, sort=["Actually stayed", "Actually churned"],
+                axis=alt.Axis(labelColor=INK_2, titleColor=MUTED, domain=False, ticks=False)),
+    )
+    rects = alt.Chart(df).mark_rect(cornerRadius=8, stroke=SURFACE, strokeWidth=6).encode(
+        **enc,
+        color=alt.Color("count:Q", scale=alt.Scale(range=["#1a2a40", "#256abf"]), legend=None),
+        tooltip=[alt.Tooltip("actual:N", title="Actual"),
+                 alt.Tooltip("predicted:N", title="Predicted"),
+                 alt.Tooltip("count:Q", title="Customers"),
+                 alt.Tooltip("meaning:N", title="Meaning")],
+    )
+    counts = alt.Chart(df).mark_text(fontSize=28, fontWeight="bold", color=INK, dy=-12).encode(
+        **enc, text="count:Q")
+    meaning = alt.Chart(df).mark_text(fontSize=FONT, color=INK_2, dy=18).encode(
+        **enc, text="meaning:N")
+    return styled((rects + counts + meaning).properties(height=320))
+
+
+def calibration_chart(cal: dict) -> alt.LayerChart:
+    df = pd.DataFrame({"predicted": cal["mean_predicted"], "observed": cal["observed_rate"]})
+    diag = alt.Chart(pd.DataFrame({"a": [0, 1]})).mark_line(color=MUTED, strokeDash=[4, 4]).encode(
+        x=alt.X("a:Q", title="Predicted churn probability", axis=_axis(".0%")),
+        y=alt.Y("a:Q", title="Observed churn rate", axis=_axis(".0%")))
+    line = alt.Chart(df).mark_line(
+        color=BLUE, strokeWidth=2, point=alt.OverlayMarkDef(size=80, filled=True, color=BLUE)
+    ).encode(
+        x="predicted:Q", y="observed:Q",
+        tooltip=[alt.Tooltip("predicted:Q", format=".1%", title="Mean predicted"),
+                 alt.Tooltip("observed:Q", format=".1%", title="Actually churned")])
+    return styled((diag + line).properties(height=380))

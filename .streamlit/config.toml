@@ -1,12 +1,15 @@
 [theme]
-base = "light"
-primaryColor = "#2a78d6"
-backgroundColor = "#ffffff"
-secondaryBackgroundColor = "#f4f6fa"
-textColor = "#0b0b0b"
-borderColor = "#e3e6ee"
-baseRadius = "0.6rem"
+base = "dark"
+primaryColor = "#3987e5"
+backgroundColor = "#121316"
+secondaryBackgroundColor = "#1d1f24"
+textColor = "#f2f2f0"
+borderColor = "#2e3138"
+linkColor = "#6da7ec"
+baseRadius = "0.7rem"
+baseFontSize = 18
 headingFontWeights = [700, 650, 600, 600, 600, 600]
+dataframeHeaderBackgroundColor = "#1d1f24"
 
 [browser]
 gatherUsageStats = false

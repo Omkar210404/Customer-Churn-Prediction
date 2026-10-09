@@ -304,6 +304,7 @@ def main() -> None:
         "test_band_stats": ev.band_stats(y_test, test_probs[final_name], threshold, high_cut),
         "explainability": explain,
         "dataset_summary": dataset_summary(df),
+        "curves": ev.curve_data(y_train, oof, y_test, test_probs),
         "model_file_kb": round(size_kb, 1),
     }
     config.METRICS_PATH.write_text(json.dumps(metrics, indent=2), encoding="utf-8")

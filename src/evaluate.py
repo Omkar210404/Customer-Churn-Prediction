@@ -81,6 +81,21 @@ def band_stats(y_true, y_prob, medium_from: float, high_from: float) -> dict:
     }
 
 
+def curve_data(y_train, oof_prob, y_test, test_probs: dict[str, np.ndarray]) -> dict:
+    """Plot-ready curve points, saved to metrics.json so the app can draw themed charts."""
+    roc = {}
+    for name, p in test_probs.items():
+        fpr, tpr, _ = roc_curve(y_test, p)
+        roc[name] = {"fpr": np.round(fpr, 4).tolist(), "tpr": np.round(tpr, 4).tolist()}
+    frac_pos, mean_pred = calibration_curve(y_train, oof_prob, n_bins=10, strategy="quantile")
+    return {
+        "roc_test": roc,
+        "threshold_oof": threshold_curve(y_train, oof_prob).round(4).to_dict(orient="list"),
+        "calibration_oof": {"mean_predicted": np.round(mean_pred, 4).tolist(),
+                            "observed_rate": np.round(frac_pos, 4).tolist()},
+    }
+
+
 # ---------------------------------------------------------------- plots
 
 def _save(fig, path: Path) -> None:

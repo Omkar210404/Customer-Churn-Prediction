@@ -157,7 +157,7 @@ with right:
             st.markdown("##### What drives this score")
             contrib = model.explain(record).head(6)
             contrib.index = [ui.pretty_feature(i) for i in contrib.index]
-            st.altair_chart(ui.signed_bars(contrib, "Effect compared with an average customer"))
+            st.altair_chart(ui.signed_bars(contrib, "Effect vs. average customer"))
             st.caption(
                 "Red pushes this customer's risk up, blue pulls it down, compared with the "
                 "average customer in the training data. Inputs overlap (monthly charges mostly "

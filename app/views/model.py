@@ -2,7 +2,6 @@ import pandas as pd
 import streamlit as st
 
 from app import ui
-from src import config
 
 model = ui.require_model()
 metrics = ui.require_metrics()
@@ -66,23 +65,32 @@ with st.container(border=True):
         "highest probability down instead."
     )
 
-st.markdown("### Charts")
-tabs = st.tabs(["ROC curves", "Threshold tuning", "Confusion matrix", "Calibration"])
-figures = [
-    ("roc_curves.png", "All three models rank customers almost identically (test set)."),
-    ("threshold_tuning.png", "Precision, recall, F1 and F2 at every threshold, on out-of-fold "
-                             "training predictions. The dashed line is the chosen threshold."),
-    ("confusion_tuned.png", f"Final model at threshold {model.threshold:.2f} on the test set."),
-    ("calibration.png", "Predicted probabilities closely match observed churn rates, so the "
-                        "percentages shown in the app can be read at face value."),
-]
-for tab, (name, caption) in zip(tabs, figures):
-    with tab:
-        c, _ = st.columns([3, 2])
-        path = config.FIGURES_DIR / name
-        if path.exists():
-            c.image(str(path), caption=caption)
-        else:
-            c.info(f"{name} not found. Run `python -m src.train`.")
+curves = metrics.get("curves")
+if curves is None:
+    st.info("Run `python -m src.train` to generate the chart data.", icon=":material/info:")
+else:
+    aucs = {name: m["roc_auc"] for name, m in metrics["test"].items()}
+    r1, r2 = st.columns(2)
+    with r1.container(border=True, height="stretch"):
+        st.markdown("##### ROC curves (test set)")
+        st.altair_chart(ui.roc_chart(curves["roc_test"], aucs))
+        st.caption("All three models rank customers almost identically. The dashed diagonal is "
+                   "random guessing.")
+    with r2.container(border=True, height="stretch"):
+        st.markdown("##### Threshold tuning")
+        st.altair_chart(ui.threshold_chart(curves["threshold_oof"], model.threshold))
+        st.caption("Scores at every threshold, on out-of-fold training predictions. Hover to "
+                   "read values. F2 peaks near the chosen threshold.")
+    r3, r4 = st.columns(2)
+    with r3.container(border=True, height="stretch"):
+        st.markdown(f"##### Confusion matrix at {model.threshold:.2f} (test set)")
+        st.altair_chart(ui.confusion_chart(cm))
+        st.caption(f"Of {meta['test_rows']:,} unseen customers: {cm['tp']} churners caught, "
+                   f"{cm['fn']} missed, {cm['fp']} false alarms.")
+    with r4.container(border=True, height="stretch"):
+        st.markdown("##### Calibration")
+        st.altair_chart(ui.calibration_chart(curves["calibration_oof"]))
+        st.caption("Predicted probabilities closely match observed churn rates (dashed line = "
+                   "perfect), so the percentages in the app can be read at face value.")
 
 ui.footer(model)

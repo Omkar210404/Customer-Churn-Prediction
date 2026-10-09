@@ -59,7 +59,7 @@
   },
   "train_rows": 5634,
   "test_rows": 1409,
-  "trained_at": "2026-10-09T10:55:26+00:00",
+  "trained_at": "2026-10-09T12:07:47+00:00",
   "sklearn_version": "1.9.1",
   "dataset_sha256": "16320c9c1ec72448db59aa0a26a0b95401046bef5d02fd3aeb906448e3055e91",
   "input_schema": {

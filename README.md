@@ -224,13 +224,14 @@ the saved pipeline and the training reports; it never retrains.
 | **Score a list** | Upload a CSV (same columns as the dataset; `customerID` kept, blanks imputed). Every row is validated and scored, then shown ranked by risk with band counts and a CSV download |
 | **Data insights** | Churn rate by any factor, against the overall average, with a generated one-line summary |
 | **Churn drivers** | Permutation importance and signed logistic-regression coefficients, in plain language with the correlation caveats |
-| **Model performance** | Model comparison, the threshold trade-off in customer counts, ROC, threshold, confusion matrix and calibration charts |
+| **Model performance** | Model comparison, the threshold trade-off in customer counts, and interactive ROC, threshold-tuning, confusion-matrix and calibration charts |
 | **Recommendations** | Five testable retention ideas, each with its supporting numbers and a caveat, plus a playbook per risk band |
 
 Dependent inputs stay consistent: add-ons are cleared and locked when internet is "None", and
 multiple lines are locked without phone service. Every number shown is read from
 `models/metadata.json` or `reports/metrics.json`, so the app stays in sync with the latest training run.
-The theme lives in `.streamlit/config.toml`.
+The dark theme (larger base font) lives in `.streamlit/config.toml`. Chart colours are the dark-mode
+steps of a colour-blind-checked palette, validated against the app background.
 
 | Score a customer | Score a list |
 |---|---|
