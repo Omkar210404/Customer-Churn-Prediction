@@ -254,8 +254,8 @@ Screenshots were captured from the running app (headless Chrome). The list examp
 Requires Python 3.11 (tested on 3.11.9, Windows 11).
 
 ```bash
-git clone https://github.com/Omkar210404/customer-churn-prediction.git
-cd customer-churn-prediction
+git clone https://github.com/Omkar210404/Customer-Churn-Prediction.git
+cd Customer-Churn-Prediction
 python -m venv .venv
 # Windows: .venv\Scripts\activate    macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
