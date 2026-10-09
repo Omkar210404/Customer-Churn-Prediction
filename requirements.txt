@@ -1,0 +1,17 @@
+# Core (training, prediction, app). Tested on Python 3.11.9.
+pandas==3.0.6
+numpy==2.4.6
+scikit-learn==1.9.1
+joblib==1.6.0
+matplotlib==3.11.2
+seaborn==0.13.2
+streamlit==1.65.0
+altair==6.3.0  # charts in the app (also a streamlit dependency)
+
+# Tests
+pytest==9.1.1
+
+# Notebook (only needed to re-execute notebooks/churn_analysis.ipynb)
+nbformat==5.11.1
+nbconvert==7.17.1
+ipykernel==7.4.0
