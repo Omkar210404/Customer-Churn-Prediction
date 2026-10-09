@@ -74,3 +74,20 @@ def valid_record() -> dict:
     rec = dict(BASE_RECORD)
     rec.update(tenure=12, MonthlyCharges=55.0, TotalCharges=660.0, SeniorCitizen="No")
     return rec
+
+
+@pytest.fixture
+def fixture_model(raw_df):
+    """A ChurnModel trained in memory on the test fixture (no files written)."""
+    from sklearn.linear_model import LogisticRegression
+
+    from src.predict import ChurnModel
+    from src.preprocessing import clean_raw, split_xy
+    from src.train import make_pipeline
+
+    X, y = split_xy(clean_raw(raw_df))
+    pipe = make_pipeline(LogisticRegression(max_iter=1000), engineered=True).fit(X, y)
+    means = dict(zip(pipe.named_steps["preprocess"].get_feature_names_out().tolist(),
+                     pipe[:-1].transform(X).mean(axis=0).tolist()))
+    return ChurnModel(pipe, {"model_name": "test", "threshold": 0.3, "high_risk_from": 0.5,
+                             "train_feature_means": means})

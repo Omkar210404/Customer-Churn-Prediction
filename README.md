@@ -7,7 +7,7 @@ Built with **pandas, scikit-learn Pipelines, joblib and Streamlit** on the publi
 **IBM Telco Customer Churn** dataset. Every number in this README comes from running
 `python -m src.train` (outputs in [`reports/`](reports/)).
 
-![Prediction view](docs/screenshots/prediction.png)
+![Score a customer](docs/screenshots/predict.png)
 
 ---
 
@@ -206,23 +206,46 @@ flowchart LR
 | `src/train.py` | Ablation, grid search, selection, threshold, evaluation, explainability, saving |
 | `src/evaluate.py` | Metrics, threshold search, risk-band stats, plots |
 | `src/predict.py` | `load_model`, `ChurnModel.predict`, `ChurnModel.explain`, CLI |
-| `app/streamlit_app.py` | The app. Loads the saved model and reports, never retrains |
+| `app/streamlit_app.py` | App entry point: theme, top navigation |
+| `app/views/` | One file per page (overview, scorer, batch scoring, insights, drivers, model, recommendations) |
+| `app/ui.py` | Shared helpers: cached loading, labels, Altair charts, batch scoring |
 | `notebooks/churn_analysis.ipynb` | EDA narrative using the same cleaning code |
-| `tests/` | 62 pytest tests (preprocessing, features, prediction, metrics, app) |
+| `tests/` | 68 pytest tests (preprocessing, features, prediction, metrics, every app page, UI helpers) |
 
 ## Streamlit app
 
-Sections: **Overview** · **Predict a customer** (form → probability, risk band, band definitions and
-a per-customer "what moved this score" chart) · **Model information** · **Dataset insights** ·
-**Feature importance** · **Business recommendations**. The form keeps dependent fields consistent
-(e.g. add-ons are locked to "No internet service" when internet is "No"). All text that quotes numbers
-reads them from `reports/metrics.json`, so it stays in sync with the latest training run.
+A multi-page app with top navigation (`app/streamlit_app.py`, pages in `app/views/`). It only loads
+the saved pipeline and the training reports; it never retrains.
 
-| Overview | Model information | Dataset insights |
-|---|---|---|
-| ![](docs/screenshots/overview.png) | ![](docs/screenshots/model_info.png) | ![](docs/screenshots/insights.png) |
+| Page | What it does |
+|---|---|
+| **Overview** | Headline numbers, what the app can do, and four key findings |
+| **Score a customer** | Sliders, toggles and segmented controls instead of 19 dropdowns. The score updates live: churn probability, a LOW / MEDIUM / HIGH badge, a risk meter showing the band cut-offs, a suggested next step, and a "what drives this score" chart (exact log-odds contributions). Includes one-click example customers |
+| **Score a list** | Upload a CSV (same columns as the dataset; `customerID` kept, blanks imputed). Every row is validated and scored, then shown ranked by risk with band counts and a CSV download |
+| **Data insights** | Churn rate by any factor, against the overall average, with a generated one-line summary |
+| **Churn drivers** | Permutation importance and signed logistic-regression coefficients, in plain language with the correlation caveats |
+| **Model performance** | Model comparison, the threshold trade-off in customer counts, ROC, threshold, confusion matrix and calibration charts |
+| **Recommendations** | Five testable retention ideas, each with its supporting numbers and a caveat, plus a playbook per risk band |
 
-Screenshots were captured from the running app (headless Chrome).
+Dependent inputs stay consistent: add-ons are cleared and locked when internet is "None", and
+multiple lines are locked without phone service. Every number shown is read from
+`models/metadata.json` or `reports/metrics.json`, so the app stays in sync with the latest training run.
+The theme lives in `.streamlit/config.toml`.
+
+| Score a customer | Score a list |
+|---|---|
+| ![](docs/screenshots/predict.png) | ![](docs/screenshots/batch.png) |
+
+| Overview | Data insights |
+|---|---|
+| ![](docs/screenshots/home.png) | ![](docs/screenshots/insights.png) |
+
+| Churn drivers | Model performance |
+|---|---|
+| ![](docs/screenshots/drivers.png) | ![](docs/screenshots/model.png) |
+
+Screenshots were captured from the running app (headless Chrome). The list example uses the first
+40 rows of the dataset.
 
 ## How to run
 
@@ -237,7 +260,7 @@ pip install -r requirements.txt
 
 python -m src.data_loader            # download + verify dataset (~1 MB)
 python -m src.train                  # optional: retrain (~1-2 min on a laptop CPU), rewrites models/ and reports/
-pytest                               # 62 tests
+pytest                               # 68 tests
 streamlit run app/streamlit_app.py   # http://localhost:8501
 ```
 
