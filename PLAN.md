@@ -102,7 +102,7 @@ Commands that must work and will be verified: `python -m src.data_loader`, `pyth
 | Small dataset (7k) → noisy metric gaps | Report CV std; don't claim one model is better when the gap is within noise |
 
 ## 8. Build order (after approval)
-venv + pinned deps → data_loader → preprocessing + tests → features + tests → train/evaluate (real metrics) → predict + tests → notebook (executed) → Streamlit app → README → DoD checklist → commits (no Claude co-author trailer).
+venv + pinned deps → data_loader → preprocessing + tests → features + tests → train/evaluate (real metrics) → predict + tests → notebook (executed) → Streamlit app → README → DoD checklist → commits.
 
 ## 9. Changes during the build
 - **No `class_weight="balanced"` in the grids.** Reweighting inflates predicted probabilities, and the
