@@ -7,7 +7,7 @@ model = ui.require_model()
 metrics = ui.require_metrics()
 explain = metrics["explainability"]
 
-ui.page_header("Churn drivers",
+ui.page_header("Churn drivers", icon="troubleshoot", accent="pink", subtitle=
                "Which inputs the model relies on, and in which direction they push the risk.")
 
 perm = (pd.DataFrame(explain["permutation_importance"]).T
@@ -15,7 +15,7 @@ perm = (pd.DataFrame(explain["permutation_importance"]).T
 perm["feature"] = perm["feature"].map(ui.pretty_feature)
 top = perm.iloc[0]
 
-with st.container(border=True):
+with ui.card("importance", "blue"):
     st.markdown("##### :material/leaderboard: What the model relies on most")
     st.markdown(
         f"**{top['feature']}** matters far more than anything else. Shuffling it lowers the "
@@ -34,7 +34,7 @@ coefs = coefs[~coefs.index.str.endswith(("_No internet service", "_No phone serv
 coefs = coefs.reindex(coefs.abs().sort_values(ascending=False).index[:12]).sort_values(ascending=False)
 coefs.index = [ui.pretty_feature(i) for i in coefs.index]
 
-with st.container(border=True):
+with ui.card("direction", "pink"):
     st.markdown("##### :material/swap_vert: Which way each input pushes the risk")
     st.altair_chart(ui.signed_bars(coefs, "Logistic regression coefficient (log-odds)"))
     st.caption(
@@ -43,7 +43,7 @@ with st.container(border=True):
         "are standardised, and categories are compared with the other options of the same input."
     )
 
-with st.container(border=True):
+with ui.card("plain", "teal"):
     st.markdown("##### :material/forum: In plain language")
     st.markdown(
         """

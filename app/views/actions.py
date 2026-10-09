@@ -11,7 +11,7 @@ def rate(col: str, group: str) -> float:
     return ui.group_rates(metrics, col).set_index("group").loc[group, "churn_rate"]
 
 
-ui.page_header("Recommendations",
+ui.page_header("Recommendations", icon="lightbulb", accent="teal", subtitle=
                "What a retention team could do with these results. Each idea is based on a "
                "pattern in the data, so treat it as something to test, not a proven fix.")
 
@@ -48,14 +48,16 @@ IDEAS = [
 
 for start in range(0, len(IDEAS), 2):
     cols = st.columns(2)
-    for col, (icon, title, evidence, action, caveat) in zip(cols, IDEAS[start:start + 2]):
-        with col.container(border=True, height="stretch"):
+    for j, (col, (icon, title, evidence, action, caveat)) in enumerate(
+            zip(cols, IDEAS[start:start + 2])):
+        accent = ["violet", "teal", "blue", "amber", "pink"][start + j]
+        with ui.card(f"idea-{start + j}", accent, parent=col, height="stretch"):
             st.markdown(f"##### {icon} {title}")
             st.markdown(evidence)
             st.markdown(f":material/arrow_forward: **Try:** {action}")
             st.caption(f"Caveat: {caveat}")
 
-with st.container(border=True):
+with ui.card("playbook", "violet"):
     st.markdown("##### :material/checklist: Using the model day to day")
     stats = model.metadata["oof_band_stats"]
     st.markdown(

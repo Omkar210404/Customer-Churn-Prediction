@@ -48,7 +48,7 @@ def seed_total() -> None:
         ss["total"] = round(ss["tenure"] * ss["monthly"], 2)
 
 
-ui.page_header("Score a customer",
+ui.page_header("Score a customer", icon="person_search", accent="violet", subtitle=
                "Describe a customer on the left. The score on the right updates instantly.")
 
 with st.container(horizontal=True, vertical_alignment="center"):
@@ -60,7 +60,7 @@ left, right = st.columns([1.35, 1], gap="large")
 
 # ------------------------------------------------------------------ inputs
 with left:
-    with st.container(border=True):
+    with ui.card("billing", "violet"):
         st.markdown("##### :material/receipt_long: Contract & billing")
         st.segmented_control("Contract", config.CATEGORICAL_VALUES["Contract"],
                              key="contract", required=True)
@@ -80,7 +80,7 @@ with left:
             total = round(ss["tenure"] * ss["monthly"], 2)
             st.caption(f"Total charges estimated as tenure × monthly charges = **${total:,.2f}**")
 
-    with st.container(border=True):
+    with ui.card("services", "teal"):
         st.markdown("##### :material/router: Services")
         st.segmented_control("Internet service", config.CATEGORICAL_VALUES["InternetService"],
                              key="internet", required=True,
@@ -97,7 +97,7 @@ with left:
             ss["multi"] = False
         p2.toggle("Multiple phone lines", key="multi", disabled=not ss["phone"])
 
-    with st.container(border=True):
+    with ui.card("profile", "blue"):
         st.markdown("##### :material/person: Customer profile")
         st.segmented_control("Gender", config.CATEGORICAL_VALUES["gender"], key="gender",
                              required=True)
@@ -141,7 +141,7 @@ with right:
     info = ui.BANDS[band]
     band_stats = model.metadata["oof_band_stats"][band]
 
-    with st.container(border=True):
+    with ui.card(f"risk-{band}"):
         st.caption("Churn probability")
         st.markdown(f'<div class="big-number">{ui.pct(p)}</div>', unsafe_allow_html=True)
         st.badge(info["headline"], icon=info["icon"], color=info["badge"])
@@ -153,8 +153,8 @@ with right:
         st.markdown(f"**Suggested next step:** {info['action']}")
 
     if model.is_linear:
-        with st.container(border=True):
-            st.markdown("##### What drives this score")
+        with ui.card("drivers", "pink"):
+            st.markdown("##### :material/insights: What drives this score")
             contrib = model.explain(record).head(6)
             contrib.index = [ui.pretty_feature(i) for i in contrib.index]
             st.altair_chart(ui.signed_bars(contrib, "Effect vs. average customer"))

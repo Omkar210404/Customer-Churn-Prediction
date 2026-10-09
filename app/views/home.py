@@ -26,25 +26,25 @@ c4.metric("Flagged customers who churn", ui.pct(tuned["precision"]),
           help="Precision on the test set: the share of flagged customers who actually left.",
           border=True)
 
-st.markdown("### What you can do here")
+ui.section("What you can do here")
 a, b, c = st.columns(3)
-with a.container(border=True, height="stretch"):
+with ui.card("do-score", "violet", parent=a, height="stretch"):
     st.markdown("#### :material/person_search: Score one customer")
     st.write("Enter a customer's plan and services, and get their churn probability, "
              "risk band and the main reasons, updated as you type.")
     st.page_link("views/predict.py", label="Open the scorer", icon=":material/arrow_forward:")
-with b.container(border=True, height="stretch"):
+with ui.card("do-batch", "teal", parent=b, height="stretch"):
     st.markdown("#### :material/upload_file: Score a whole list")
     st.write("Upload a CSV of customers. Get everyone scored and ranked by risk, "
              "ready to download as a contact list.")
     st.page_link("views/batch.py", label="Upload a list", icon=":material/arrow_forward:")
-with c.container(border=True, height="stretch"):
+with ui.card("do-explore", "amber", parent=c, height="stretch"):
     st.markdown("#### :material/bar_chart: Explore the patterns")
     st.write("See which customer groups churn most, which inputs the model relies on, "
              "and what the business could test next.")
     st.page_link("views/insights.py", label="See the insights", icon=":material/arrow_forward:")
 
-st.markdown("### Key findings")
+ui.section("Key findings")
 rates = {col: ui.group_rates(metrics, col).set_index("group")["churn_rate"]
          for col in ["Contract", "tenure_bucket", "InternetService", "PaymentMethod"]}
 f1, f2, f3, f4 = st.columns(4)
@@ -58,11 +58,12 @@ findings = [
     (f4, "Electronic-check payers", rates["PaymentMethod"]["Electronic check"],
      f"vs {ui.pct(rates['PaymentMethod']['Credit card (automatic)'])} on automatic card"),
 ]
-for col, title, value, compare in findings:
-    with col.container(border=True):
+for i, (col, title, value, compare) in enumerate(findings):
+    accent = ["pink", "amber", "blue", "teal"][i]
+    with ui.card(f"finding-{i}", accent, parent=col, height="stretch"):
         st.caption(title)
-        st.markdown(f'<div class="big-number" style="font-size:2.2rem">{ui.pct(value)}</div>',
-                    unsafe_allow_html=True)
+        st.markdown(f'<div class="stat-value" style="color:{ui.ACCENTS[accent][0]}">'
+                    f'{ui.pct(value)}</div>', unsafe_allow_html=True)
         st.caption(f"churned, {compare}")
 
 with st.expander("How does it work?", icon=":material/help:"):

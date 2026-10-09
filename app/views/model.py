@@ -9,7 +9,7 @@ meta = model.metadata
 tuned = metrics["test_final_tuned"]
 cm = tuned["confusion_matrix"]
 
-ui.page_header("Model performance",
+ui.page_header("Model performance", icon="model_training", accent="amber", subtitle=
                "How the models compare, why this one was chosen, and how well it does on "
                f"{meta['test_rows']:,} customers it never saw during training.")
 
@@ -24,7 +24,7 @@ k3.metric("Flagged who churned", f"{cm['tp']} of {cm['tp'] + cm['fp']}",
 k4.metric("Decision threshold", f"{model.threshold:.2f}",
           help="Customers at or above this probability are flagged.", border=True)
 
-with st.container(border=True):
+with ui.card("comparison", "violet"):
     st.markdown("##### :material/compare: Model comparison")
     rows = []
     for name, m in metrics["test"].items():
@@ -47,7 +47,7 @@ with st.container(border=True):
                 "training was: in a tie, pick the most interpretable model. Logistic regression "
                 "also gives an exact explanation for every single prediction.")
 
-with st.container(border=True):
+with ui.card("tradeoff", "amber"):
     st.markdown("##### :material/tune: The threshold trade-off")
     default = metrics["test"][meta["model_name"]]["confusion_matrix"]
     trade = pd.DataFrame(
@@ -71,23 +71,23 @@ if curves is None:
 else:
     aucs = {name: m["roc_auc"] for name, m in metrics["test"].items()}
     r1, r2 = st.columns(2)
-    with r1.container(border=True, height="stretch"):
+    with ui.card("roc", parent=r1, height="stretch"):
         st.markdown("##### ROC curves (test set)")
         st.altair_chart(ui.roc_chart(curves["roc_test"], aucs))
         st.caption("All three models rank customers almost identically. The dashed diagonal is "
                    "random guessing.")
-    with r2.container(border=True, height="stretch"):
+    with ui.card("threshold", parent=r2, height="stretch"):
         st.markdown("##### Threshold tuning")
         st.altair_chart(ui.threshold_chart(curves["threshold_oof"], model.threshold))
         st.caption("Scores at every threshold, on out-of-fold training predictions. Hover to "
                    "read values. F2 peaks near the chosen threshold.")
     r3, r4 = st.columns(2)
-    with r3.container(border=True, height="stretch"):
+    with ui.card("confusion", parent=r3, height="stretch"):
         st.markdown(f"##### Confusion matrix at {model.threshold:.2f} (test set)")
         st.altair_chart(ui.confusion_chart(cm))
         st.caption(f"Of {meta['test_rows']:,} unseen customers: {cm['tp']} churners caught, "
                    f"{cm['fn']} missed, {cm['fp']} false alarms.")
-    with r4.container(border=True, height="stretch"):
+    with ui.card("calibration", parent=r4, height="stretch"):
         st.markdown("##### Calibration")
         st.altair_chart(ui.calibration_chart(curves["calibration_oof"]))
         st.caption("Predicted probabilities closely match observed churn rates (dashed line = "

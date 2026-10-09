@@ -7,12 +7,12 @@ from src import config
 model = ui.require_model()
 
 ui.page_header(
-    "Score a list of customers",
+    "Score a list of customers", icon="upload_file", accent="teal", subtitle=
     "Upload a CSV with one customer per row. Every customer is scored and ranked by risk, "
     "ready to download as a contact list.",
 )
 
-with st.container(border=True):
+with ui.card("prepare", "teal"):
     st.markdown("##### :material/description: 1. Prepare the file")
     st.markdown(
         "Use the same columns as the IBM Telco dataset. `customerID` is optional and is kept in "
@@ -29,7 +29,7 @@ with st.container(border=True):
         st.markdown("**tenure**, **MonthlyCharges**, **TotalCharges**: numbers ≥ 0 "
                     "(tenure in months)")
 
-with st.container(border=True):
+with ui.card("upload", "blue"):
     st.markdown("##### :material/upload: 2. Upload and score")
     upload = st.file_uploader("Customer CSV", type=["csv"], label_visibility="collapsed")
 
@@ -48,8 +48,8 @@ except ValueError as exc:
     st.stop()
 
 counts = scored["risk_band"].value_counts()
-st.markdown("##### :material/insights: 3. Results")
-k1, k2, k3, k4 = st.columns(4)
+ui.section("3. Results")
+k1, k2, k3, k4 = st.container(key="bandkpis").columns(4)
 k1.metric("Customers scored", f"{len(scored):,}", border=True)
 k2.metric("High risk", f"{counts.get('HIGH', 0):,}", border=True)
 k3.metric("Medium risk", f"{counts.get('MEDIUM', 0):,}", border=True)

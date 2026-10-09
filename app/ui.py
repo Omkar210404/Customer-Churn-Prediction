@@ -12,7 +12,7 @@ from src import config
 from src.predict import ChurnModel, ModelNotFoundError, load_model
 
 # Colours: dark-mode steps of the reference data-viz palette, validated against the app
-# background #121316 (validate_palette.js: all checks pass). Status colours are only used
+# card surface #161922 (validate_palette.js: all checks pass). Status colours are only used
 # for risk bands, and always next to an icon + label.
 BLUE = "#3987e5"
 RED = "#e66767"
@@ -22,7 +22,7 @@ INK_2 = "#c3c2b7"
 MUTED = "#9a9890"
 GRID = "#2a2d33"
 BASELINE = "#4a4d55"
-SURFACE = "#121316"
+SURFACE = "#161922"
 STATUS = {"LOW": "#0ca30c", "MEDIUM": "#fab219", "HIGH": "#d03b3b"}
 FONT = 14  # chart label size
 
@@ -127,32 +127,170 @@ def group_rates(metrics: dict, col: str) -> pd.DataFrame:
 
 # ------------------------------------------------------------------ layout
 
+# UI accent colours (chrome only: banners, card edges, KPI tiles). Data colours stay in the
+# validated chart palette above.
+ACCENTS = {
+    "violet": ("#8b7cf6", "139,124,246"),
+    "teal": ("#22c3a6", "34,195,166"),
+    "blue": ("#3d8bfd", "61,139,253"),
+    "amber": ("#f5b041", "245,176,65"),
+    "pink": ("#f06292", "240,98,146"),
+}
+ACCENT_CYCLE = ["violet", "teal", "blue", "amber"]
+BAND_TINT = {"LOW": "12,163,12", "MEDIUM": "250,178,25", "HIGH": "208,59,59"}
+
+
+def _card_css() -> str:
+    rules = []
+    for name, (hex_, rgb) in ACCENTS.items():
+        rules.append(
+            f'[class*="st-key-card-{name}"] {{'
+            f"border-left: 4px solid {hex_} !important;"
+            f"background: linear-gradient(135deg, rgba({rgb},0.16) 0%, rgba({rgb},0.03) 45%, "
+            f"#151821 100%) !important;}}"
+        )
+    for band, rgb in BAND_TINT.items():
+        rules.append(
+            f'[class*="st-key-card-risk-{band}"] {{'
+            f"border: 1px solid rgba({rgb},0.55) !important;"
+            f"background: linear-gradient(160deg, rgba({rgb},0.22) 0%, rgba({rgb},0.04) 55%, "
+            f"#151821 100%) !important;"
+            f"box-shadow: 0 0 0 1px rgba({rgb},0.15), 0 12px 40px rgba({rgb},0.18) !important;}}"
+        )
+    # KPI tiles: accent rotates by column position.
+    for i, name in enumerate(ACCENT_CYCLE, start=1):
+        hex_, rgb = ACCENTS[name]
+        rules.append(
+            f'[data-testid="stColumn"]:nth-child({i}) [data-testid="stMetric"] {{'
+            f"border-top: 3px solid {hex_} !important;"
+            f"background: linear-gradient(160deg, rgba({rgb},0.20) 0%, rgba({rgb},0.04) 60%, "
+            f"#151821 100%) !important;}}"
+        )
+    # Batch-scoring KPI row: band counts wear their band colour, not the rotating accent.
+    for i, band in enumerate(["HIGH", "MEDIUM", "LOW"], start=2):
+        rgb = BAND_TINT[band]
+        rules.append(
+            f'[class*="st-key-bandkpis"] [data-testid="stColumn"]:nth-child({i}) '
+            f'[data-testid="stMetric"] {{border-top: 3px solid {STATUS[band]} !important;'
+            f"background: linear-gradient(160deg, rgba({rgb},0.22) 0%, rgba({rgb},0.04) 60%, "
+            f"#151821 100%) !important;}}"
+        )
+    return "\n".join(rules)
+
+
 CSS = """
 <style>
 [data-testid="stAppDeployButton"] {display: none;}
-[data-testid="stMainBlockContainer"] {padding-top: 4.5rem; max-width: 1200px;}
+
+/* page background: soft colour glows on deep navy */
+[data-testid="stApp"] {
+  background:
+    radial-gradient(1100px 520px at -5% -10%, rgba(139,124,246,0.20), transparent 60%),
+    radial-gradient(900px 480px at 105% -5%, rgba(34,195,166,0.14), transparent 60%),
+    radial-gradient(800px 600px at 50% 120%, rgba(61,139,253,0.10), transparent 60%),
+    #0d0f14;
+  background-attachment: fixed;
+}
+
+/* use the full window width */
+[data-testid="stMainBlockContainer"] {
+  max-width: 100% !important;
+  padding: 4.6rem 3.2rem 2.5rem 3.2rem !important;
+}
+
+/* frosted top navigation with a gradient pill for the active page */
+[data-testid="stHeader"] {
+  background: rgba(13,15,20,0.72) !important;
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+[data-testid="stTopNavLink"] {border-radius: 999px !important; padding: 4px 14px !important;}
+[data-testid="stTopNavLink"][aria-current="page"] {
+  background: linear-gradient(90deg, #6d5ff0, #3d8bfd) !important;
+  color: #ffffff !important;
+}
+
+/* every bordered container becomes a card */
+[data-testid="stVerticalBlock"][class*="st-key-card"] {
+  background: linear-gradient(180deg, #171a24 0%, #13151c 100%);
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  padding: 1.1rem 1.3rem !important;
+}
+
+/* KPI tiles */
+[data-testid="stMetric"] {
+  border-radius: 16px !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  padding: 16px 20px !important;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.30);
+}
+[data-testid="stMetricValue"] {font-weight: 700;}
+
+/* banners */
+.hero, .banner {
+  position: relative; overflow: hidden; color: #ffffff;
+  border: 1px solid rgba(255,255,255,0.10); border-radius: 22px;
+  box-shadow: 0 18px 50px rgba(0,0,0,0.40);
+}
 .hero {
-  background: linear-gradient(120deg, #0b2547 0%, #1c5cab 100%);
-  border: 1px solid #2e3a52;
-  border-radius: 14px; padding: 28px 32px; margin-bottom: 8px; color: #ffffff;
+  padding: 38px 42px; margin-bottom: 6px;
+  background:
+    radial-gradient(600px 300px at 90% 10%, rgba(34,195,166,0.45), transparent 60%),
+    linear-gradient(120deg, #2a1f7a 0%, #4c3fd1 45%, #1c6fd1 100%);
 }
-.hero h1 {color: #ffffff; font-size: 2.4rem; margin: 0 0 6px 0; padding: 0;}
-.hero p {color: #dbe8fb; font-size: 1.15rem; margin: 0; max-width: 820px;}
-.hero .chips {margin-top: 14px;}
-.hero .chip {
+.hero h1 {color: #ffffff; font-size: 2.9rem; margin: 0 0 8px 0; padding: 0; letter-spacing: -0.5px;}
+.hero p {color: #e6e3ff; font-size: 1.2rem; margin: 0; max-width: 900px;}
+.hero .chips {margin-top: 18px;}
+.chip {
   display: inline-block; background: rgba(255,255,255,0.14); color: #ffffff;
-  border: 1px solid rgba(255,255,255,0.25); border-radius: 999px;
-  padding: 3px 12px; margin: 0 6px 6px 0; font-size: 0.85rem;
+  border: 1px solid rgba(255,255,255,0.28); border-radius: 999px;
+  padding: 4px 14px; margin: 0 8px 8px 0; font-size: 0.9rem; font-weight: 600;
 }
-.page-title h2 {margin-bottom: 0;}
+.banner {padding: 24px 30px; margin-bottom: 4px; display: flex; gap: 20px; align-items: center;}
+.banner .icon {
+  font-family: 'Material Symbols Rounded'; font-size: 34px; line-height: 1;
+  width: 58px; height: 58px; display: flex; align-items: center; justify-content: center;
+  border-radius: 16px; background: rgba(255,255,255,0.16); flex: none;
+}
+.banner h2 {color: #ffffff; font-size: 2rem; margin: 0; padding: 0;}
+.banner p {color: rgba(255,255,255,0.86); font-size: 1.08rem; margin: 4px 0 0 0;}
+
+/* section titles with an accent bar */
+.section {display: flex; align-items: center; gap: 12px; margin: 18px 0 6px 0;}
+.section .bar {width: 6px; height: 28px; border-radius: 4px;
+  background: linear-gradient(180deg, #8b7cf6, #22c3a6);}
+.section h3 {margin: 0; padding: 0; font-size: 1.55rem;}
+
 .subtle {color: #c3c2b7; font-size: 1.05rem;}
-.big-number {font-size: 3.2rem; font-weight: 700; line-height: 1.05; margin: 4px 0 2px 0;}
+.big-number {
+  font-size: 3.6rem; font-weight: 800; line-height: 1.05; margin: 4px 0 6px 0;
+  background: linear-gradient(90deg, #ffffff 0%, #d9d3ff 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.stat-value {font-size: 2.4rem; font-weight: 800; line-height: 1.1; margin: 6px 0 4px 0;}
 </style>
 """
 
+BANNER_GRADIENTS = {
+    "violet": "linear-gradient(120deg, #2a1f7a 0%, #5b4be0 100%)",
+    "teal": "linear-gradient(120deg, #0b4a45 0%, #14a08a 100%)",
+    "blue": "linear-gradient(120deg, #0d2e66 0%, #2f7de8 100%)",
+    "amber": "linear-gradient(120deg, #5a3a06 0%, #c98500 100%)",
+    "pink": "linear-gradient(120deg, #5a1238 0%, #d0487f 100%)",
+}
+
 
 def inject_css() -> None:
-    st.html(CSS)
+    st.html(CSS.replace("</style>", _card_css() + "\n</style>"))
+
+
+def card(name: str, accent: str | None = None, parent=None, **kwargs):
+    """Bordered container styled as a card. `accent` adds a coloured edge and tint;
+    `parent` is a column (or other container) to place it in."""
+    key = f"card-{accent}-{name}" if accent else f"card-{name}"
+    return (parent or st).container(border=True, key=key, **kwargs)
 
 
 def hero(title: str, subtitle: str, chips: list[str]) -> None:
@@ -161,9 +299,16 @@ def hero(title: str, subtitle: str, chips: list[str]) -> None:
             f'<div class="chips">{chip_html}</div></div>')
 
 
-def page_header(title: str, subtitle: str) -> None:
-    st.markdown(f"## {title}")
-    st.markdown(f'<p class="subtle">{subtitle}</p>', unsafe_allow_html=True)
+def page_header(title: str, subtitle: str, icon: str = "insights", accent: str = "violet") -> None:
+    """Gradient banner at the top of a page. `icon` is a Material Symbols name."""
+    st.html(
+        f'<div class="banner" style="background: {BANNER_GRADIENTS[accent]};">'
+        f'<div class="icon">{icon}</div><div><h2>{title}</h2><p>{subtitle}</p></div></div>'
+    )
+
+
+def section(title: str) -> None:
+    st.html(f'<div class="section"><div class="bar"></div><h3>{title}</h3></div>')
 
 
 def footer(model: ChurnModel) -> None:
@@ -207,8 +352,8 @@ def risk_meter(p: float, threshold: float, high_from: float) -> alt.LayerChart:
                  alt.Tooltip("end:Q", format=".0%", title="To")],
     )
     point = pd.DataFrame({"p": [p], "label": [pct(p)]})
-    marker = alt.Chart(point).mark_point(shape="triangle-down", size=260, filled=True,
-                                         color=INK, yOffset=-16).encode(
+    marker = alt.Chart(point).mark_point(shape="triangle-down", size=520, filled=True,
+                                         color=INK, yOffset=-18).encode(
         x="p:Q", tooltip=[alt.Tooltip("label:N", title="This customer")])
     return styled((track + marker).properties(height=70))
 

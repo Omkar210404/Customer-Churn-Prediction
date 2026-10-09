@@ -7,7 +7,7 @@ metrics = ui.require_metrics()
 summary = metrics["dataset_summary"]
 overall = summary["churn_rate"]
 
-ui.page_header("Data insights",
+ui.page_header("Data insights", icon="bar_chart", accent="blue", subtitle=
                "How churn differs between customer groups across the whole dataset "
                f"({summary['rows']:,} customers).")
 
@@ -33,7 +33,7 @@ FACTORS = {
     "Dependents": ("Dependents", False),
 }
 
-with st.container(border=True):
+with ui.card("breakdown", "blue"):
     choice = st.segmented_control("Break down churn by", list(FACTORS), default="Contract",
                                   required=True)
     col, keep_order = FACTORS[choice]
@@ -48,12 +48,12 @@ with st.container(border=True):
         f"average of {ui.pct(overall)}."
     )
 
-st.markdown("### All factors at a glance")
+ui.section("All factors at a glance")
 items = list(FACTORS.items())
 for start in range(0, len(items), 2):
     cols = st.columns(2)
     for slot, (name, (col, keep_order)) in zip(cols, items[start:start + 2]):
-        with slot.container(border=True, height="stretch"):
+        with ui.card(f"factor-{col}", parent=slot, height="stretch"):
             st.markdown(f"**{name}**")
             st.altair_chart(ui.rate_bars(ui.group_rates(metrics, col), overall,
                                          sort=not keep_order))

@@ -230,7 +230,8 @@ the saved pipeline and the training reports; it never retrains.
 Dependent inputs stay consistent: add-ons are cleared and locked when internet is "None", and
 multiple lines are locked without phone service. Every number shown is read from
 `models/metadata.json` or `reports/metrics.json`, so the app stays in sync with the latest training run.
-The dark theme (larger base font) lives in `.streamlit/config.toml`. Chart colours are the dark-mode
+The full-width dark theme (larger base font, colour-accented cards and page banners) lives in
+`.streamlit/config.toml` and the CSS in `app/ui.py`. Chart colours are the dark-mode
 steps of a colour-blind-checked palette, validated against the app background.
 
 | Score a customer | Score a list |
