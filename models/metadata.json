@@ -1,0 +1,203 @@
+{
+  "model_name": "Logistic Regression",
+  "best_params": {
+    "C": 1.0
+  },
+  "engineered_features": true,
+  "threshold": 0.14,
+  "high_risk_from": 0.5,
+  "risk_bands": {
+    "LOW": "probability < 0.14",
+    "MEDIUM": "0.14 <= probability < 0.50",
+    "HIGH": "probability >= 0.50"
+  },
+  "oof_band_stats": {
+    "LOW": {
+      "share": 0.43326233581824636,
+      "churn_rate": 0.04956984842277755
+    },
+    "MEDIUM": {
+      "share": 0.35356762513312034,
+      "churn_rate": 0.28815261044176704
+    },
+    "HIGH": {
+      "share": 0.2131700390486333,
+      "churn_rate": 0.6661115736885929
+    }
+  },
+  "test_metrics_tuned": {
+    "threshold": 0.14,
+    "accuracy": 0.6628814762242725,
+    "precision": 0.43631778058007564,
+    "recall": 0.9251336898395722,
+    "f1": 0.5929734361610969,
+    "f2": 0.7557885539536916,
+    "roc_auc": 0.8423854917461056,
+    "brier": 0.13747393137076003,
+    "confusion_matrix": {
+      "tn": 588,
+      "fp": 447,
+      "fn": 28,
+      "tp": 346
+    }
+  },
+  "test_metrics_default": {
+    "threshold": 0.5,
+    "accuracy": 0.7991483321504613,
+    "precision": 0.6531986531986532,
+    "recall": 0.5187165775401069,
+    "f1": 0.5782414307004471,
+    "f2": 0.5409927495817066,
+    "roc_auc": 0.8423854917461056,
+    "brier": 0.13747393137076003,
+    "confusion_matrix": {
+      "tn": 932,
+      "fp": 103,
+      "fn": 180,
+      "tp": 194
+    }
+  },
+  "train_rows": 5634,
+  "test_rows": 1409,
+  "trained_at": "2026-10-09T10:55:26+00:00",
+  "sklearn_version": "1.9.1",
+  "dataset_sha256": "16320c9c1ec72448db59aa0a26a0b95401046bef5d02fd3aeb906448e3055e91",
+  "input_schema": {
+    "categorical": {
+      "gender": [
+        "Female",
+        "Male"
+      ],
+      "SeniorCitizen": [
+        "No",
+        "Yes"
+      ],
+      "Partner": [
+        "No",
+        "Yes"
+      ],
+      "Dependents": [
+        "No",
+        "Yes"
+      ],
+      "PhoneService": [
+        "No",
+        "Yes"
+      ],
+      "MultipleLines": [
+        "No",
+        "Yes",
+        "No phone service"
+      ],
+      "InternetService": [
+        "DSL",
+        "Fiber optic",
+        "No"
+      ],
+      "OnlineSecurity": [
+        "No",
+        "Yes",
+        "No internet service"
+      ],
+      "OnlineBackup": [
+        "No",
+        "Yes",
+        "No internet service"
+      ],
+      "DeviceProtection": [
+        "No",
+        "Yes",
+        "No internet service"
+      ],
+      "TechSupport": [
+        "No",
+        "Yes",
+        "No internet service"
+      ],
+      "StreamingTV": [
+        "No",
+        "Yes",
+        "No internet service"
+      ],
+      "StreamingMovies": [
+        "No",
+        "Yes",
+        "No internet service"
+      ],
+      "Contract": [
+        "Month-to-month",
+        "One year",
+        "Two year"
+      ],
+      "PaperlessBilling": [
+        "No",
+        "Yes"
+      ],
+      "PaymentMethod": [
+        "Electronic check",
+        "Mailed check",
+        "Bank transfer (automatic)",
+        "Credit card (automatic)"
+      ]
+    },
+    "numeric": [
+      "tenure",
+      "MonthlyCharges",
+      "TotalCharges"
+    ]
+  },
+  "train_feature_means": {
+    "num__tenure": -8.315834511746824e-17,
+    "num__MonthlyCharges": -2.4108037776471716e-16,
+    "num__TotalCharges": -7.764072980161727e-18,
+    "num__num_addon_services": -6.826866607226468e-16,
+    "num__avg_monthly_spend": 2.685502197300609e-16,
+    "cat__gender_Female": 0.4971600993965211,
+    "cat__gender_Male": 0.5028399006034788,
+    "cat__SeniorCitizen_No": 0.8367057152999645,
+    "cat__SeniorCitizen_Yes": 0.16329428470003549,
+    "cat__Partner_No": 0.5156194533191338,
+    "cat__Partner_Yes": 0.48438054668086616,
+    "cat__Dependents_No": 0.7019879304224352,
+    "cat__Dependents_Yes": 0.29801206957756476,
+    "cat__PhoneService_No": 0.09921902733404331,
+    "cat__PhoneService_Yes": 0.9007809726659567,
+    "cat__MultipleLines_No": 0.47657082002129925,
+    "cat__MultipleLines_No phone service": 0.09921902733404331,
+    "cat__MultipleLines_Yes": 0.42421015264465745,
+    "cat__InternetService_DSL": 0.3438054668086617,
+    "cat__InternetService_Fiber optic": 0.44071707490237844,
+    "cat__InternetService_No": 0.2154774582889599,
+    "cat__OnlineSecurity_No": 0.4964501242456514,
+    "cat__OnlineSecurity_No internet service": 0.2154774582889599,
+    "cat__OnlineSecurity_Yes": 0.2880724174653887,
+    "cat__OnlineBackup_No": 0.4334398296059638,
+    "cat__OnlineBackup_No internet service": 0.2154774582889599,
+    "cat__OnlineBackup_Yes": 0.3510827121050763,
+    "cat__DeviceProtection_No": 0.4387646432374867,
+    "cat__DeviceProtection_No internet service": 0.2154774582889599,
+    "cat__DeviceProtection_Yes": 0.3457578984735534,
+    "cat__TechSupport_No": 0.49183528576499824,
+    "cat__TechSupport_No internet service": 0.2154774582889599,
+    "cat__TechSupport_Yes": 0.2926872559460419,
+    "cat__StreamingTV_No": 0.3951011714589989,
+    "cat__StreamingTV_No internet service": 0.2154774582889599,
+    "cat__StreamingTV_Yes": 0.38942137025204115,
+    "cat__StreamingMovies_No": 0.3935037273695421,
+    "cat__StreamingMovies_No internet service": 0.2154774582889599,
+    "cat__StreamingMovies_Yes": 0.39101881434149804,
+    "cat__Contract_Month-to-month": 0.5505857294994675,
+    "cat__Contract_One year": 0.20820021299254526,
+    "cat__Contract_Two year": 0.24121405750798722,
+    "cat__PaperlessBilling_No": 0.40876819311324103,
+    "cat__PaperlessBilling_Yes": 0.5912318068867589,
+    "cat__PaymentMethod_Bank transfer (automatic)": 0.2208022719204828,
+    "cat__PaymentMethod_Credit card (automatic)": 0.21529996450124245,
+    "cat__PaymentMethod_Electronic check": 0.33564075257365994,
+    "cat__PaymentMethod_Mailed check": 0.22825701100461485,
+    "cat__tenure_bucket_0-12m": 0.3083067092651757,
+    "cat__tenure_bucket_13-24m": 0.14518991835285766,
+    "cat__tenure_bucket_25-48m": 0.22896698615548455,
+    "cat__tenure_bucket_49m+": 0.31753638622648206
+  }
+}
